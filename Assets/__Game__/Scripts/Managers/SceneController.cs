@@ -15,12 +15,12 @@ public class SceneController : MonoBehaviour
 
     public void LoadCVBuilder()
     {
-        SceneManager.LoadScene("CVBuilder");
+        SceneManager.LoadScene("3CVBuilder");
     }
 
     public void LoadJobBoard()
     {
-        SceneManager.LoadScene("JobBoard");
+        SceneManager.LoadScene("4JobBoard");
     }
 
     public void LoadEmailInbox()
