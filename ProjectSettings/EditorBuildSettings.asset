@@ -5,23 +5,23 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/__Game__/Scenes/1MainMenu.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
     path: Assets/__Game__/Scenes/2Desktop.unity
     guid: b0b7cd9e9477df14ba01d512f73c6b1c
   - enabled: 1
-    path: Assets/__Game__/Scenes/3CVResumeBuilder.unity
+    path: Assets/__Game__/Scenes/3CVBuilder.unity
     guid: 225d8b9c3ca30b24c86a8723a932453f
   - enabled: 1
     path: Assets/__Game__/Scenes/4JobBoard.unity
     guid: 046e808c2707d3a4f8dce23bddff7f8a
-  - enabled: 1
+  - enabled: 0
     path: Assets/__Game__/Scenes/5EmailInbox.unity
     guid: b0b631ba6abd67548aeb2e8db698142d
-  - enabled: 1
-    path: Assets/__Game__/Scenes/6Interview.unity
+  - enabled: 0
+    path: Assets/__Game__/Scenes/6MiniGame.unity
     guid: 5710d96bb861ab04faf0c49ee5d9c96e
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

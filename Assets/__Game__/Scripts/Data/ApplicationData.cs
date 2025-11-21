@@ -1,41 +1,42 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [System.Serializable]
 public class ApplicationData
 {
-    public JobPosting job;
-    public CVType cvType;
-    public int submittedWeek;
-    public bool responseReceived = false;
-    public float successChance; // Calculated when application submitted
+    public JobData job;                    // Which job (using JobData, not JobPosting)
+    public CVChoices cvChoices;            // Detailed CV choices
+    public int submittedMonth;             // When submitted
+    public bool responseReceived = false;  // Has response been generated
+    public bool gotCallback = false;       // Did they get callback?
+    public float successChance = 0f;       // Calculated success chance
 
-    public ApplicationData(JobPosting jobPosting, CVType cv, int week)
+    // Constructor for easy creation
+    public ApplicationData(JobData jobData, CVChoices cv, int month)
     {
-        job = jobPosting;
-        cvType = cv;
-        submittedWeek = week;
+        job = jobData;
+        cvChoices = cv;
+        submittedMonth = month;
         responseReceived = false;
-
-        // Calculate success chance based on CV type and job
-        successChance = CalculateSuccessChance();
-    }
-
-    private float CalculateSuccessChance()
-    {
-        switch (cvType)
-        {
-            case CVType.Real:
-                return job.realCVChance;
-            case CVType.Safe:
-                return job.safeCVChance;
-            case CVType.Diverse:
-                return job.diverseCVChance;
-            default:
-                return 0.3f;
-        }
+        gotCallback = false;
+        successChance = 0f;
     }
 }
 
+[System.Serializable]
+public class CVChoices
+{
+    // Single choices
+    public string chosenName;           // "Zhanna Bolatkhan" or "Joanna Bolat"
+    public string chosenPhoto;          // "Casual" / "Professional" / "None"
+    public string chosenCoverLetter;    // "International" / "Neutral" / "Norwegian"
+
+    // Multiple choices (arrays)
+    public string[] chosenLanguages;    // ["Norwegian", "English", "Mandarin"]
+    public string[] chosenHobbies;      // ["Crochet", "Video Games", "Skiing"]
+    public string[] chosenVolunteer;    // ["Immigrant org", "Tech student org"]
+}
+
+// OLD ENUM - Keeping for any legacy code, but not using anymore
 public enum CVType
 {
     Real,
