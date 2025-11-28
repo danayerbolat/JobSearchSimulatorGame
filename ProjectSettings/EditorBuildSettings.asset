@@ -17,7 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/__Game__/Scenes/4JobBoard.unity
     guid: 046e808c2707d3a4f8dce23bddff7f8a
-  - enabled: 0
+  - enabled: 1
     path: Assets/__Game__/Scenes/5EmailInbox.unity
     guid: b0b631ba6abd67548aeb2e8db698142d
   - enabled: 0

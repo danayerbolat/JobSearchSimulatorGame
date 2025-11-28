@@ -94,24 +94,22 @@ public class CVBuilderController : MonoBehaviour
         float authenticityCost = CalculateAuthenticityCost(cv);
         GameManager.Instance.authenticityScore -= authenticityCost;
 
-        // Drain energy from applying
-        Debug.Log($"[ENERGY] Before submission: {GameManager.Instance.emotionalEnergy}");
-        GameManager.Instance.emotionalEnergy -= 5f;
+        // Drain energy from applying (use configurable value)
+        float oldEnergy = GameManager.Instance.emotionalEnergy;
+        GameManager.Instance.emotionalEnergy -= GameManager.Instance.applicationEnergyCost;
         GameManager.Instance.emotionalEnergy = Mathf.Clamp(
             GameManager.Instance.emotionalEnergy,
             0,
             GameManager.Instance.maxEnergy
         );
 
-        // Save application to GameManager
+        Debug.Log($"[ENERGY] Application submitted: {oldEnergy} → {GameManager.Instance.emotionalEnergy} (-{GameManager.Instance.applicationEnergyCost})");
+
+        // Save application
         GameManager.Instance.submittedApplications.Add(application);
 
         Debug.Log($"✅ Application saved! Total applications: {GameManager.Instance.submittedApplications.Count}");
         Debug.Log($"Applied to: {application.job.companyName}");
-
-        // Update backgrounds
-        Debug.Log($"[ENERGY] After submission (-5): {GameManager.Instance.emotionalEnergy}");
-        GameManager.Instance.UpdateBackgrounds();
 
         // Return to Desktop
         SceneManager.LoadScene("2Desktop");

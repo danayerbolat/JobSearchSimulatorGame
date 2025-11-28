@@ -21,6 +21,9 @@ public class DesktopController : MonoBehaviour
     public Button emailButton;
     public Button calendarButton;
 
+    [Header("Email Notification")]
+    public GameObject emailNotif;
+
     [Header("Debug Panel")]
     public GameObject debugPanel;
     public TextMeshProUGUI debugText;
@@ -32,6 +35,7 @@ public class DesktopController : MonoBehaviour
         UpdateUI();
         UpdateBackgrounds();
         UpdateStatusMessage();
+        UpdateEmailNotification();
 
         // Add listeners to buttons
         cvButton.onClick.AddListener(OpenCVFolder);
@@ -98,6 +102,20 @@ public class DesktopController : MonoBehaviour
         energyText.text = $"Energy: {GameManager.Instance.emotionalEnergy:F0}";
     }
 
+    private void UpdateEmailNotification()
+    {
+        if (emailNotif == null) return;
+
+        // Show notification if there are unread responses
+        bool hasUnreadEmails = GameManager.Instance.HasUnreadResponses();
+        emailNotif.SetActive(hasUnreadEmails);
+
+        if (hasUnreadEmails)
+        {
+            Debug.Log("Email notification shown - you have unread responses!");
+        }
+    }
+
     private void UpdateStatusMessage()
     {
         if (statusMessageText == null) return;
@@ -140,17 +158,16 @@ public class DesktopController : MonoBehaviour
 
     private void OpenEmail()
     {
-        ShowDebugMessage("Email clicked! (Scene not built yet)");
-        Debug.Log("Email opened");
+        SceneManager.LoadScene("5EmailInbox");
     }
 
     private void OpenCalendar()
     {
         ShowDebugMessage("Calendar clicked - advancing week!");
-        AdvanceWeek();
+        AdvanceTime();
     }
 
-    private void AdvanceWeek()
+    private void AdvanceTime()
     {
         // Check if the week limit is hit
         if (GameManager.Instance.currentMonth >= GameManager.Instance.maxMonths)
@@ -159,8 +176,9 @@ public class DesktopController : MonoBehaviour
             return; // Don't advance further
         }
 
-        GameManager.Instance.AdvanceWeek();
+        GameManager.Instance.AdvanceTime();
         UpdateUI();
+        UpdateEmailNotification();
         ShowDebugMessage($"Week advanced to {GameManager.Instance.currentMonth}");
 
         // Check if this was the last week

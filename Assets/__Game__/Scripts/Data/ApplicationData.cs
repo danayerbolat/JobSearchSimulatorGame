@@ -3,7 +3,7 @@
 [System.Serializable]
 public class ApplicationData
 {
-    public JobData job;                    // Which job (using JobData, not JobPosting)
+    public JobData job;                    // Which job (using JobData, not JobData)
     public CVChoices cvChoices;            // Detailed CV choices
     public int submittedMonth;             // When submitted
     public bool responseReceived = false;  // Has response been generated
