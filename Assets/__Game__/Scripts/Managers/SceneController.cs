@@ -25,7 +25,7 @@ public class SceneController : MonoBehaviour
 
     public void LoadEmailInbox()
     {
-        SceneManager.LoadScene("EmailInbox");
+        SceneManager.LoadScene("5EmailInbox");
     }
 
     public void QuitGame()

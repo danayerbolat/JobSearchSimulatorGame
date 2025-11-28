@@ -8,7 +8,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Game State")]
     public int currentMonth = 1;
-    public int maxMonths = 19; // Game duration is 10 months
+    public int maxMonths; // Game duration is 10 months
 
     [Header("Player Stats")]
     public float emotionalEnergy = 100f;
@@ -16,21 +16,27 @@ public class GameManager : MonoBehaviour
     public float authenticityScore = 100f; // Hidden from player
     public float energyDrainRate = 10f; //Energy lost by time progressing
 
+    [Header("Energy Impact Settings")]
+    public float callbackEnergyBoost = 25f;    // Energy gained from callback
+    public float rejectionEnergyDrain = 20f;   // Energy lost from rejection
+    public float applicationEnergyCost = 5f;   // Energy to submit application
+
     [Header("Desktop Backgrounds")]
     public GameObject fullEnergyBackground;    // Bright, cute background
     public GameObject mediumEnergyBackground;  // Darker, muted background
     public GameObject lowEnergyBackground;     // Dark, oppressive background
 
-    //Maybe a way to track each element of authenticity separately?
-    [Header("CV Tracking")]
-    public int realCVUsed = 0;
-    public int safeCVUsed = 0;
-    public int diverseCVUsed = 0;
+    ////Maybe a way to track each element of authenticity separately?
+    //[Header("CV Tracking")]
+    //public int realCVUsed = 0;
+    //public int safeCVUsed = 0;
+    //public int diverseCVUsed = 0;
 
     [Header("Applications")]
     public List<ApplicationData> submittedApplications = new List<ApplicationData>();
     public List<ApplicationData> callbacks = new List<ApplicationData>();
     public List<ApplicationData> rejections = new List<ApplicationData>();
+    public List<ApplicationData> readEmails = new List<ApplicationData>(); // NEW - emails that have been read
 
     [Header("Current Application")]
     public JobData currentJobApplyingTo = null;
@@ -39,17 +45,14 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log($"[GAMEMANAGER] Awake called! Instance exists: {Instance != null}");
         // Singleton pattern - only one GameManager exists
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Debug.Log($"[GAMEMANAGER] ✅ This is THE instance. ID: {GetInstanceID()}");
         }
         else
         {
-            Debug.LogWarning($"[GAMEMANAGER] ❌ DUPLICATE! Destroying this one. Original ID: {Instance.GetInstanceID()}, This ID: {GetInstanceID()}");
             Destroy(gameObject);
         }
     }
@@ -57,10 +60,12 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // Initialize backgrounds at start
+        Debug.Log($"[GAMEMANAGER] Start called! ID: {GetInstanceID()}");
+        Debug.Log($"[GAMEMANAGER] Initial energy: {emotionalEnergy}");
         UpdateBackgrounds();
     }
 
-    public void AdvanceWeek()
+    public void AdvanceTime()
     {
         if (currentMonth >= maxMonths)
         {
@@ -68,9 +73,8 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // Advance by 1-2 months
-        int monthsToAdvance = Random.Range(1, 3);
-        currentMonth += monthsToAdvance;
+        // Advance by 1 month
+        currentMonth += 1;
 
         if (currentMonth > maxMonths)
         {
@@ -81,9 +85,9 @@ public class GameManager : MonoBehaviour
 
         // Drain energy
         Debug.Log($"[ENERGY] Before time drain: {emotionalEnergy}");
-        emotionalEnergy -= energyDrainRate * monthsToAdvance;
+        emotionalEnergy -= energyDrainRate;
         emotionalEnergy = Mathf.Clamp(emotionalEnergy, 0, maxEnergy);
-        Debug.Log($"[ENERGY] After time drain (-{energyDrainRate * monthsToAdvance}): {emotionalEnergy}");
+        Debug.Log($"[ENERGY] After time drain (-{energyDrainRate}): {emotionalEnergy}");
 
         UpdateBackgrounds();
         ProcessApplications();
@@ -113,7 +117,7 @@ public class GameManager : MonoBehaviour
     {
         app.responseReceived = true;
 
-        // USE SCORING SYSTEM TO CALCULATE CHANCE
+        // Calculate success chance
         float successChance = ApplicationScoring.Instance.CalculateSuccessChance(app);
         app.successChance = successChance;
 
@@ -122,29 +126,20 @@ public class GameManager : MonoBehaviour
 
         if (roll <= successChance)
         {
-            // CALLBACK
+            // CALLBACK - energy boost happens when email is READ
             app.gotCallback = true;
             callbacks.Add(app);
-
-            Debug.Log($"[ENERGY] Before callback bonus: {emotionalEnergy}");
-            emotionalEnergy += 25f;
-            emotionalEnergy = Mathf.Clamp(emotionalEnergy, 0, maxEnergy);
-            Debug.Log($"[ENERGY] After callback (+25): {emotionalEnergy}");
             Debug.Log($"✅ CALLBACK from {app.job.companyName}! (Chance was {successChance:P0})");
         }
         else
         {
-            // REJECTION
+            // REJECTION - energy drain happens when email is READ
             app.gotCallback = false;
             rejections.Add(app);
-            Debug.Log($"[ENERGY] Before rejection penalty: {emotionalEnergy}");
-            emotionalEnergy -= 20f;
-            emotionalEnergy = Mathf.Clamp(emotionalEnergy, 0, maxEnergy);
-            Debug.Log($"[ENERGY] After rejection (-20): {emotionalEnergy}");
             Debug.Log($"❌ REJECTION from {app.job.companyName} (Chance was {successChance:P0})");
         }
 
-        UpdateBackgrounds();
+        // Responses generated, but emotional impact happens when player reads them
     }
 
     public void UpdateBackgrounds()
@@ -206,6 +201,7 @@ public class GameManager : MonoBehaviour
 
     public bool HasUnreadResponses()
     {
+        // Has unread if there are callbacks OR rejections that haven't been read
         return (callbacks.Count > 0 || rejections.Count > 0);
     }
 }
