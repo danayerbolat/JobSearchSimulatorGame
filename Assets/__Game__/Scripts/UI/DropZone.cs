@@ -1,19 +1,38 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
+using UnityEngine.UI;
 
 public class DropZone : MonoBehaviour, IDropHandler
 {
     [Header("Drop Zone Info")]
     public string acceptedType;
-    public bool allowMultiple = false; // NEW: Can hold multiple items?
+    public bool allowMultiple = false; // Can hold multiple items?
 
     [Header("Display")]
     public TextMeshProUGUI displayText;
 
+    [Header("Image Display (optional)")]
+    public bool useImageForValue = false; // tick this for the photo field
+    public Image targetImage;             // Image inside [Drop photo here] frame
+
     [Header("Current Value")]
     public string currentValue = "";
-    private DraggableOption currentOption = null; // NEW: Track which option is currently used
+    private DraggableOption currentOption = null; // Track which option is currently used
+
+    [Header("Text Formatting")]
+    public bool adjustFontSizeOnDrop = false; // turn this on only for Profil
+    public float droppedFontSize = 18f;       // smaller size for the dropped text
+
+    private float originalFontSize;
+
+    private void Awake()
+    {
+        if (displayText != null)
+        {
+            originalFontSize = displayText.fontSize;
+        }
+    }
 
     public void OnDrop(PointerEventData eventData)
     {
@@ -34,24 +53,41 @@ public class DropZone : MonoBehaviour, IDropHandler
 
     private void AcceptOption(DraggableOption option)
     {
-        // If something was already here, return it to options panel
+        // If something was already here, return it
         if (currentOption != null && currentOption != option && !allowMultiple)
         {
-            // IMPORTANT: Clear the old option's state completely
             currentOption.MarkAsUnused();
-            currentOption = null; // Clear reference before setting new one
+            currentOption = null;
         }
 
-        // Update to new option
         currentValue = option.optionValue;
         currentOption = option;
 
-        if (displayText != null)
+        // PHOTO-style zone
+        if (useImageForValue && targetImage != null && option.displaySprite != null)
+        {
+            // show sprite
+            targetImage.sprite = option.displaySprite;
+            targetImage.enabled = true;
+
+            // hide placeholder text
+            if (displayText != null)
+            {
+                displayText.text = "";
+                // we don't care about font size here
+            }
+        }
+        // NORMAL text zone (Profil, Name, etc.)
+        else if (displayText != null)
         {
             displayText.text = option.optionValue;
+
+            if (adjustFontSizeOnDrop)
+            {
+                displayText.fontSize = droppedFontSize;
+            }
         }
 
-        // Hide the new option from options panel
         option.MarkAsUsed();
 
         Debug.Log($"Dropped {option.optionValue} into {acceptedType} field");
@@ -64,7 +100,6 @@ public class DropZone : MonoBehaviour, IDropHandler
 
     public void Clear()
     {
-        // If something is here, return it
         if (currentOption != null)
         {
             currentOption.MarkAsUnused();
@@ -72,9 +107,27 @@ public class DropZone : MonoBehaviour, IDropHandler
         }
 
         currentValue = "";
+
+        // reset image if this zone uses one
+        if (useImageForValue && targetImage != null)
+        {
+            targetImage.sprite = null;
+            targetImage.enabled = false;
+        }
+
         if (displayText != null)
         {
             displayText.text = $"[Drop {acceptedType} here]";
+
+            if (adjustFontSizeOnDrop)
+            {
+                displayText.fontSize = originalFontSize;
+            }
         }
+    }
+
+    public void ClearDropZone()
+    {
+        Clear();
     }
 }

@@ -10,7 +10,12 @@ public class DesktopController : MonoBehaviour
     public TextMeshProUGUI energyText;
     public TextMeshProUGUI statusMessageText;
 
-    [Header("Backgrounds - ASSIGN IN INSPECTOR")]
+    [Header("Windows")]
+    public DraggableWindow jobBoardWindow;
+    public DraggableWindow cvBuilderWindow;
+    public DraggableWindow emailWindow;
+
+    [Header("Backgrounds")]
     public GameObject fullEnergyBackground;
     public GameObject mediumEnergyBackground;
     public GameObject lowEnergyBackground;
@@ -31,6 +36,7 @@ public class DesktopController : MonoBehaviour
     private void Start()
     {
         AssignBackgroundsToGameManager();
+        CloseAllWindows();
 
         UpdateUI();
         UpdateBackgrounds();
@@ -41,7 +47,7 @@ public class DesktopController : MonoBehaviour
         cvButton.onClick.AddListener(OpenCVFolder);
         jobBoardButton.onClick.AddListener(OpenJobBoard);
         emailButton.onClick.AddListener(OpenEmail);
-        calendarButton.onClick.AddListener(OpenCalendar);
+        calendarButton.onClick.AddListener(TimeSkip); //Clicking here advances time
 
         // Hide debug panel at start
         if (debugPanel != null)
@@ -52,8 +58,6 @@ public class DesktopController : MonoBehaviour
 
     private void AssignBackgroundsToGameManager()
     {
-        Debug.Log("[DESKTOP] Assigning backgrounds to GameManager...");
-
         if (fullEnergyBackground != null)
         {
             GameManager.Instance.fullEnergyBackground = fullEnergyBackground;
@@ -87,13 +91,24 @@ public class DesktopController : MonoBehaviour
         Debug.Log($"[DESKTOP] Current energy: {GameManager.Instance.emotionalEnergy}");
     }
 
-    private void UpdateBackgrounds()
+    private void CloseAllWindows()
+    {
+        if (jobBoardWindow != null)
+            jobBoardWindow.gameObject.SetActive(false);
+        if (cvBuilderWindow != null)
+            cvBuilderWindow.gameObject.SetActive(false);
+        if (emailWindow != null)
+            emailWindow.gameObject.SetActive(false);
+    }
+
+    public void UpdateBackgrounds()
     {
         // Call GameManager's update, which now has references
         GameManager.Instance.UpdateBackgrounds();
     }
 
-    private void UpdateUI()
+    //I dont think UpdateUI is necessary since months and energy is not displayed on desktop anymore
+    public void UpdateUI()
     {
         // Update week display
         dateText.text = $"Month {GameManager.Instance.currentMonth}";
@@ -102,21 +117,17 @@ public class DesktopController : MonoBehaviour
         energyText.text = $"Energy: {GameManager.Instance.emotionalEnergy:F0}";
     }
 
-    private void UpdateEmailNotification()
+    public void UpdateEmailNotification()
     {
         if (emailNotif == null) return;
 
         // Show notification if there are unread responses
         bool hasUnreadEmails = GameManager.Instance.HasUnreadResponses();
         emailNotif.SetActive(hasUnreadEmails);
-
-        if (hasUnreadEmails)
-        {
-            Debug.Log("Email notification shown - you have unread responses!");
-        }
     }
 
-    private void UpdateStatusMessage()
+    //Where is this used? I have not seen this in the game anywhere...
+    public void UpdateStatusMessage()
     {
         if (statusMessageText == null) return;
 
@@ -143,7 +154,7 @@ public class DesktopController : MonoBehaviour
     }
 
     // Button functions
-    private void OpenCVFolder()
+    private void OpenCVFolder() //This one might not be needed at all... 
     {
         ShowDebugMessage("CV Folder clicked! (Scene not built yet)");
         Debug.Log("CV Folder opened");
@@ -151,17 +162,21 @@ public class DesktopController : MonoBehaviour
 
     private void OpenJobBoard()
     {
-        ShowDebugMessage("Job Board clicked! (Scene not built yet)");
-        Debug.Log("Job Board opened");
-        SceneManager.LoadScene("4JobBoard");
+        if (jobBoardWindow != null)
+        {
+            jobBoardWindow.OpenWindow();
+        }
     }
 
     private void OpenEmail()
     {
-        SceneManager.LoadScene("5EmailInbox");
+        if (emailWindow != null)
+        {
+            emailWindow.OpenWindow();
+        }
     }
 
-    private void OpenCalendar()
+    private void TimeSkip()
     {
         ShowDebugMessage("Calendar clicked - advancing week!");
         AdvanceTime();
@@ -188,6 +203,7 @@ public class DesktopController : MonoBehaviour
         }
     }
 
+    // Can remove this when not needed
     private void ShowDebugMessage(string message)
     {
         if (debugPanel != null && debugText != null)
@@ -199,7 +215,7 @@ public class DesktopController : MonoBehaviour
             Invoke("HideDebugPanel", 3f);
         }
     }
-
+    // Can remove this when not needed
     private void HideDebugPanel()
     {
         if (debugPanel != null)

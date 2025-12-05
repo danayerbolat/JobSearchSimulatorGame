@@ -8,12 +8,15 @@ public class DraggableOption : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     public string optionType;
     public string optionValue;
 
+    [Header("Optional Visual")]
+    public Sprite displaySprite;   // <-- sprite to show in drop zone (e.g. photo)
+
     [Header("References")]
     private Canvas canvas;
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
     private Transform originalParent;
-    private Vector2 originalAnchoredPosition; // NEW: Store exact position!
+    private Vector2 originalAnchoredPosition; // Store exact position!
 
     [Header("State")]
     public bool isCurrentlyUsed = false;
@@ -30,7 +33,7 @@ public class DraggableOption : MonoBehaviour, IBeginDragHandler, IDragHandler, I
         }
 
         originalParent = transform.parent;
-        originalAnchoredPosition = rectTransform.anchoredPosition; // STORE IT!
+        originalAnchoredPosition = rectTransform.anchoredPosition; // STORE POSITION!
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -96,5 +99,11 @@ public class DraggableOption : MonoBehaviour, IBeginDragHandler, IDragHandler, I
             canvasGroup.blocksRaycasts = true;
             canvasGroup.interactable = true;
         }
+    }
+
+    // Reset option to its original position and state
+    public void ReturnToStart()
+    {
+        MarkAsUnused();
     }
 }

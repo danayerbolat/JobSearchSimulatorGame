@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
     [Header("Player Stats")]
     public float emotionalEnergy = 100f;
     public float maxEnergy = 100f;
-    public float authenticityScore = 100f; // Hidden from player
+    public float authenticityScore = 100f; // Hidden from player, how to give feedback?
     public float energyDrainRate = 10f; //Energy lost by time progressing
 
     [Header("Energy Impact Settings")]
@@ -22,26 +22,21 @@ public class GameManager : MonoBehaviour
     public float applicationEnergyCost = 5f;   // Energy to submit application
 
     [Header("Desktop Backgrounds")]
-    public GameObject fullEnergyBackground;    // Bright, cute background
-    public GameObject mediumEnergyBackground;  // Darker, muted background
-    public GameObject lowEnergyBackground;     // Dark, oppressive background
-
-    ////Maybe a way to track each element of authenticity separately?
-    //[Header("CV Tracking")]
-    //public int realCVUsed = 0;
-    //public int safeCVUsed = 0;
-    //public int diverseCVUsed = 0;
+    public GameObject fullEnergyBackground;
+    public GameObject mediumEnergyBackground;  
+    public GameObject lowEnergyBackground;     
 
     [Header("Applications")]
     public List<ApplicationData> submittedApplications = new List<ApplicationData>();
     public List<ApplicationData> callbacks = new List<ApplicationData>();
     public List<ApplicationData> rejections = new List<ApplicationData>();
-    public List<ApplicationData> readEmails = new List<ApplicationData>(); // NEW - emails that have been read
+    public List<ApplicationData> readEmails = new List<ApplicationData>();
+    public List<ApplicationData> allEmails = new List<ApplicationData>();
 
     [Header("Current Application")]
     public JobData currentJobApplyingTo = null;
 
-    private int updateBackgroundCallCount = 0; // NEW - for debugging
+    private int updateBackgroundCallCount = 0; 
 
     private void Awake()
     {
@@ -60,7 +55,6 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // Initialize backgrounds at start
-        Debug.Log($"[GAMEMANAGER] Start called! ID: {GetInstanceID()}");
         Debug.Log($"[GAMEMANAGER] Initial energy: {emotionalEnergy}");
         UpdateBackgrounds();
     }
@@ -81,13 +75,9 @@ public class GameManager : MonoBehaviour
             currentMonth = maxMonths;
         }
 
-        Debug.Log($"Time advanced to Month {currentMonth}");
-
         // Drain energy
-        Debug.Log($"[ENERGY] Before time drain: {emotionalEnergy}");
         emotionalEnergy -= energyDrainRate;
         emotionalEnergy = Mathf.Clamp(emotionalEnergy, 0, maxEnergy);
-        Debug.Log($"[ENERGY] After time drain (-{energyDrainRate}): {emotionalEnergy}");
 
         UpdateBackgrounds();
         ProcessApplications();
@@ -117,29 +107,23 @@ public class GameManager : MonoBehaviour
     {
         app.responseReceived = true;
 
-        // Calculate success chance
         float successChance = ApplicationScoring.Instance.CalculateSuccessChance(app);
         app.successChance = successChance;
 
-        // Roll for success
         float roll = Random.Range(0f, 1f);
 
         if (roll <= successChance)
         {
-            // CALLBACK - energy boost happens when email is READ
             app.gotCallback = true;
             callbacks.Add(app);
-            Debug.Log($"✅ CALLBACK from {app.job.companyName}! (Chance was {successChance:P0})");
+            allEmails.Add(app);
         }
         else
         {
-            // REJECTION - energy drain happens when email is READ
             app.gotCallback = false;
             rejections.Add(app);
-            Debug.Log($"❌ REJECTION from {app.job.companyName} (Chance was {successChance:P0})");
+            allEmails.Add(app);
         }
-
-        // Responses generated, but emotional impact happens when player reads them
     }
 
     public void UpdateBackgrounds()
@@ -166,7 +150,7 @@ public class GameManager : MonoBehaviour
                 //Debug.Log("Background: Full Energy (bright)");
             }
         }
-        else if (energyPercent > 10f)
+        else if (energyPercent > 20f)
         {
             // Medium energy: Show darker background
             if (mediumEnergyBackground != null)
