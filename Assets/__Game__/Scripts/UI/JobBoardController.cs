@@ -7,18 +7,18 @@ using System.Collections.Generic;
 public class JobBoardController : MonoBehaviour
 {
     [Header("UI References")]
-    public Transform jobListContent; // The Content object inside Scroll View
-    public GameObject jobCardPrefab; // We'll create this as prefab
-    public Button backButton;
+    public Transform jobListContent; 
+    public GameObject jobCardPrefab; 
+
+    [Header("Window References")]
+    public DraggableWindow cvBuilderWindow;
+    public DraggableWindow jobBoardWindow;
 
     [Header("Job Data")]
-    public List<JobData> availableJobs; // Drag your 5 JobData assets here
+    public List<JobData> availableJobs; // Drag JobData assets here
 
     private void Start()
     {
-        // Set up back button
-        backButton.onClick.AddListener(GoBackToDesktop);
-
         // Populate job list
         PopulateJobList();
     }
@@ -70,15 +70,11 @@ public class JobBoardController : MonoBehaviour
     {
         Debug.Log($"Applying to: {job.jobTitle} at {job.companyName}");
 
-        // Store which job we're applying to in GameManager
         GameManager.Instance.currentJobApplyingTo = job;
 
-        // Go to CV Builder
-        SceneManager.LoadScene("3CVBuilder");
-    }
-
-    private void GoBackToDesktop()
-    {
-        SceneManager.LoadScene("2Desktop");
+        if (cvBuilderWindow != null)
+        {
+            cvBuilderWindow.OpenWindow();
+        }
     }
 }

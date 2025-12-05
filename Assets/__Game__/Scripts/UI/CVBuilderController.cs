@@ -4,8 +4,15 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections.Generic;
 
-public class CVBuilderController : MonoBehaviour
+public class CVBuilderController : MonoBehaviour, IResettable
 {
+    [Header("Window Reference")]
+    public DraggableWindow cvBuilderWindow;
+    public DraggableWindow jobBoardWindow;
+
+    [Header("Desktop Reference")] 
+    public DesktopController desktopController; 
+
     [Header("Single Drop Zones")]
     public DropZone nameField;
     public DropZone photoField;
@@ -19,6 +26,10 @@ public class CVBuilderController : MonoBehaviour
     [Header("UI")]
     public Button submitButton;
 
+    [Header("Submit Button Sprites")]
+    [SerializeField] private Sprite submitActiveSprite;
+    [SerializeField] private Sprite submitInactiveSprite;
+
     private void Start()
     {
         submitButton.onClick.AddListener(OnSubmitClicked);
@@ -27,6 +38,32 @@ public class CVBuilderController : MonoBehaviour
 
     private void Update()
     {
+        UpdateSubmitButton();
+    }
+
+    public void ResetState()
+    {
+        // Reset single drop zones
+        if (nameField != null)
+            nameField.ClearDropZone();
+
+        if (photoField != null)
+            photoField.ClearDropZone();
+
+        if (coverLetterField != null)
+            coverLetterField.ClearDropZone();
+
+        // Reset multi drop zones
+        if (languagesField != null)
+            languagesField.ClearDropZone();
+
+        if (hobbiesField != null)
+            hobbiesField.ClearDropZone();
+
+        if (volunteerField != null)
+            volunteerField.ClearDropZone();
+
+        // Update submit button state
         UpdateSubmitButton();
     }
 
@@ -42,13 +79,17 @@ public class CVBuilderController : MonoBehaviour
 
         submitButton.interactable = allFilled;
 
-        if (allFilled)
+        Image img = submitButton.GetComponent<Image>();
+        if (img != null)
         {
-            submitButton.GetComponent<Image>().color = new Color(0.3f, 0.69f, 0.31f);
-        }
-        else
-        {
-            submitButton.GetComponent<Image>().color = Color.gray;
+            if (allFilled && submitActiveSprite != null)
+            {
+                img.sprite = submitActiveSprite;
+            }
+            else if (!allFilled && submitInactiveSprite != null)
+            {
+                img.sprite = submitInactiveSprite;
+            }
         }
     }
 
@@ -108,13 +149,32 @@ public class CVBuilderController : MonoBehaviour
         // Save application
         GameManager.Instance.submittedApplications.Add(application);
 
-        Debug.Log($"✅ Application saved! Total applications: {GameManager.Instance.submittedApplications.Count}");
+        Debug.Log($"Application saved! Total applications: {GameManager.Instance.submittedApplications.Count}");
         Debug.Log($"Applied to: {application.job.companyName}");
 
         // Return to Desktop
-        SceneManager.LoadScene("2Desktop");
+        if (cvBuilderWindow != null)
+        {
+            cvBuilderWindow.CloseWindow();
+        }
+
+        if (jobBoardWindow != null) { 
+            jobBoardWindow.CloseWindow();
+        }
+
+        if (desktopController != null)
+        {
+            desktopController.UpdateUI();
+            desktopController.UpdateStatusMessage();
+        }
+        else
+        {
+            Debug.LogWarning("[CV BUILDER] DesktopController reference not assigned!");
+        }
+        ResetState();
     }
 
+    //Here is where the authenticity cost is calculated based on CV choices... NEED TO TWEAK VALUES AND FIGURE OUT HOW THEY WORK!!!
     private float CalculateAuthenticityCost(CVChoices cv)
     {
         float cost = 0f;
