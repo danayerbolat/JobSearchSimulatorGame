@@ -3,7 +3,7 @@
 [System.Serializable]
 public class ApplicationData
 {
-    public JobData job;                    // Which job (using JobData, not JobData)
+    public JobData job;                    // Which job 
     public CVChoices cvChoices;            // Detailed CV choices
     public int submittedMonth;             // When submitted
     public bool responseReceived = false;  // Has response been generated
@@ -31,15 +31,7 @@ public class CVChoices
     public string chosenCoverLetter;    // "International" / "Neutral" / "Norwegian"
 
     // Multiple choices (arrays)
-    public string[] chosenLanguages;    // ["Norwegian", "English", "Mandarin"]
-    public string[] chosenHobbies;      // ["Crochet", "Video Games", "Skiing"]
-    public string[] chosenVolunteer;    // ["Immigrant org", "Tech student org"]
-}
-
-// OLD ENUM - Keeping for any legacy code, but not using anymore
-public enum CVType
-{
-    Real,
-    Safe,
-    Diverse
+    public string[] chosenLanguages;
+    public string[] chosenHobbies;      
+    public string[] chosenVolunteer;    
 }

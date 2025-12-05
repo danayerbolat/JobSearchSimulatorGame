@@ -1,155 +1,343 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections.Generic;
+using System.Linq;
 
-public class EmailController : MonoBehaviour
+public class EmailController : MonoBehaviour, IResettable
 {
-    [Header("UI References")]
+    [Header("Window Reference")]
+    public DraggableWindow emailWindow;
+
+    [Header("Desktop Reference")]
+    public DesktopController desktopController;
+
+    [Header("UI References - Email List (Left Panel)")]
+    public Transform emailListContainer; // Container for email items
+    public TextMeshProUGUI inboxHeaderText; // "INNBOKS\n3 uleste"
+
+    [Header("UI References - Email Display (Right Panel)")]
+    public GameObject emailDisplayPanel;
+    public GameObject emptySelectionPanel;
     public TextMeshProUGUI companyNameText;
+    public TextMeshProUGUI jobTitleText;
+    public TextMeshProUGUI dateText;
     public TextMeshProUGUI resultText;
-    public Button closeButton;
+    public TextMeshProUGUI messageText;
 
     [Header("Email Messages")]
     [TextArea(3, 6)]
-    public string callbackMessageNorwegian = "Gratulerer!\n\nVi vil gjerne invitere deg til intervju. Vennligst kontakt oss for å avtale tidspunkt.\n\nMed vennlig hilsen,\n{0}";
+    public string callbackMessageNorwegian = "Gratulerer!\n\nVi vil gjerne invitere deg til intervju for stillingen som {0}.\n\nVennligst kontakt oss for å avtale tidspunkt.\n\nMed vennlig hilsen,\n{1}";
 
     [TextArea(3, 6)]
-    public string rejectionMessageNorwegian = "Takk for din søknad.\n\nDessverre må vi meddele at vi har valgt å gå videre med andre kandidater denne gangen.\n\nVi ønsker deg lykke til videre.\n\nMed vennlig hilsen,\n{0}";
+    public string rejectionMessageNorwegian = "Takk for din søknad til stillingen som {0}.\n\nDessverre må vi meddele at vi har valgt å gå videre med andre kandidater denne gangen.\n\nVi ønsker deg lykke til videre i jobbsøket.\n\nMed vennlig hilsen,\n{1}";
+
+    [Header("Buttons")]
+    public Button closeButton;
+
+    private ApplicationData currentlySelectedEmail = null;
+    private List<GameObject> emailListItems = new List<GameObject>();
+
+    [Header("Email List Styling")]
+    public TMP_FontAsset listFont;                           // assign LTKai-1 SDF here
+    public Color listTextColor = new Color32(0x37, 0x27, 0x27, 0xFF); // #372727
+    public Color listBackgroundColor = new Color(0.98f, 0.98f, 0.98f); // set in Inspector
 
     private void Start()
     {
-        closeButton.onClick.AddListener(CloseEmail);
-
-        DisplayLatestEmail();
+        if (closeButton != null)
+            closeButton.onClick.AddListener(CloseEmail);
     }
 
-    private void DisplayLatestEmail()
+    public void ResetState()
     {
-        // Get the most recent unread response
-        ApplicationData latestResponse = GetLatestUnreadResponse();
+        Debug.Log("[EMAIL] Refreshing email client...");
+        RefreshEmailList();
+        ShowEmptySelection();
+    }
 
-        if (latestResponse != null)
+    private void RefreshEmailList()
+    {
+        // Clear existing items
+        foreach (GameObject item in emailListItems)
         {
-            // Display the email
-            ShowEmail(latestResponse);
+            if (item != null)
+                Destroy(item);
+        }
+        emailListItems.Clear();
 
-            // Mark as read (remove from callbacks/rejections lists)
-            MarkAsRead(latestResponse);
+        // Get all emails (newest first)
+        List<ApplicationData> allEmails = new List<ApplicationData>(GameManager.Instance.allEmails);
+        allEmails.Reverse();
+
+        // Count unread
+        int unreadCount = GameManager.Instance.callbacks.Count + GameManager.Instance.rejections.Count;
+
+        // Update header
+        if (inboxHeaderText != null)
+        {
+            if (unreadCount > 0)
+            {
+                inboxHeaderText.text = $"INNBOKS\n{unreadCount} uleste";
+            }
+            else
+            {
+                inboxHeaderText.text = "INNBOKS\nAlle lest";
+            }
+        }
+
+        if (allEmails.Count == 0)
+        {
+            CreateEmptyMessage();
         }
         else
         {
-            // No emails to show
-            companyNameText.text = "Ingen nye meldinger";
-            resultText.text = "Du har ingen uleste e-poster.";
+            foreach (ApplicationData email in allEmails)
+            {
+                CreateEmailListItem(email);
+            }
+
+            // Auto-select first unread
+            ApplicationData firstUnread = allEmails.FirstOrDefault(e =>
+                GameManager.Instance.callbacks.Contains(e) ||
+                GameManager.Instance.rejections.Contains(e));
+
+            if (firstUnread != null)
+            {
+                SelectEmail(firstUnread);
+            }
         }
     }
 
-    private ApplicationData GetLatestUnreadResponse()
+    private void CreateEmptyMessage()
     {
-        // Check callbacks first
-        if (GameManager.Instance.callbacks.Count > 0)
-        {
-            return GameManager.Instance.callbacks[0];
-        }
+        GameObject item = new GameObject("EmptyMessage");
+        item.transform.SetParent(emailListContainer, false);
 
-        // Then check rejections
-        if (GameManager.Instance.rejections.Count > 0)
-        {
-            return GameManager.Instance.rejections[0];
-        }
+        TextMeshProUGUI text = item.AddComponent<TextMeshProUGUI>();
+        text.text = "Ingen e-poster ennå.\n\nSøk på jobber!";
+        text.alignment = TextAlignmentOptions.Left;
+        text.fontSize = 24;
+        text.color = Color.gray; //change color for empty message
 
-        return null;
+        RectTransform rt = item.GetComponent<RectTransform>();
+        rt.sizeDelta = new Vector2(280, 100);
+
+        emailListItems.Add(item);
     }
 
-    private void ShowEmail(ApplicationData app)
+    private void CreateEmailListItem(ApplicationData email)
     {
-        // Set company name
-        companyNameText.text = $"Fra: {app.job.companyName}";
+        // Create container
+        GameObject item = new GameObject($"Email_{email.job.companyName}");
+        item.transform.SetParent(emailListContainer, false);
 
-        // Set message based on callback or rejection
-        if (app.gotCallback)
+        RectTransform rt = item.AddComponent<RectTransform>();
+        rt.sizeDelta = new Vector2(280, 100);
+
+        // Background
+        Image bg = item.AddComponent<Image>();
+
+        // We still compute isUnread (for the dot / future logic)
+        bool isUnread = GameManager.Instance.callbacks.Contains(email) ||
+                        GameManager.Instance.rejections.Contains(email);
+
+        // Same background for all items, from Inspector
+        if (bg != null)
         {
-            // CALLBACK - Good news!
-            resultText.text = string.Format(callbackMessageNorwegian, app.job.companyName);
-            resultText.color = new Color(0.0f, 0.5f, 0.0f); // Dark green
+            bg.color = listBackgroundColor;
+        }
 
-            Debug.Log($"📧 Showing CALLBACK email from {app.job.companyName}");
+        // Button
+        Button btn = item.AddComponent<Button>();
+        ColorBlock colors = btn.colors;
+        colors.highlightedColor = new Color(0.9f, 0.95f, 1.0f);
+        colors.pressedColor = new Color(0.8f, 0.9f, 1.0f);
+        colors.selectedColor = new Color(0.85f, 0.92f, 1.0f);
+        btn.colors = colors;
+        btn.onClick.AddListener(() => SelectEmail(email));
+
+        // Layout
+        VerticalLayoutGroup layout = item.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(12, 12, 10, 10);
+        layout.spacing = 0;
+        layout.childAlignment = TextAnchor.UpperLeft;
+        layout.childForceExpandWidth = true;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+
+        // Company name
+        GameObject companyObj = new GameObject("CompanyName");
+        companyObj.transform.SetParent(item.transform, false);
+        TextMeshProUGUI companyText = companyObj.AddComponent<TextMeshProUGUI>();
+        companyText.text = (isUnread ? "● " : "") + email.job.companyName; // keep dot for unread
+        companyText.fontSize = 32;
+        companyText.fontStyle = isUnread ? FontStyles.Bold : FontStyles.Normal;
+
+        if (listFont != null)
+            companyText.font = listFont;
+        companyText.color = listTextColor;
+
+        // Result
+        GameObject resultObj = new GameObject("Result");
+        resultObj.transform.SetParent(item.transform, false);
+        TextMeshProUGUI resultText = resultObj.AddComponent<TextMeshProUGUI>();
+
+        if (email.gotCallback)
+        {
+            resultText.text = "Intervju Innkalling";
         }
         else
         {
-            // REJECTION - Bad news
-            resultText.text = string.Format(rejectionMessageNorwegian, app.job.companyName);
-            resultText.color = new Color(0.5f, 0.0f, 0.0f); // Dark red
+            resultText.text = "Takk for søknaden din";
+        }
+        resultText.fontSize = 28;
 
-            Debug.Log($"📧 Showing REJECTION email from {app.job.companyName}");
+        if (listFont != null)
+            resultText.font = listFont;
+        resultText.color = listTextColor;
+
+        // Date
+        GameObject dateObj = new GameObject("Date");
+        dateObj.transform.SetParent(item.transform, false);
+        TextMeshProUGUI dateText = dateObj.AddComponent<TextMeshProUGUI>();
+        dateText.text = $"Måned {email.submittedMonth + 2}";
+        dateText.fontSize = 20;
+
+        if (listFont != null)
+            dateText.font = listFont;
+        dateText.color = listTextColor;
+
+        emailListItems.Add(item);
+    }
+
+
+    public void SelectEmail(ApplicationData email)
+    {
+        if (email == null) return;
+
+        currentlySelectedEmail = email;
+        ShowEmailContent(email);
+
+        // Apply impact if unread
+        bool wasUnread = GameManager.Instance.callbacks.Contains(email) ||
+                         GameManager.Instance.rejections.Contains(email);
+
+        if (wasUnread)
+        {
+            ApplyEmotionalImpact(email);
+            MarkAsRead(email);
+            RefreshEmailList();
+            SelectEmail(email); // Re-select after refresh
+
+            if (desktopController != null)
+            {
+                desktopController.UpdateEmailNotification();
+            }
         }
     }
 
-    // NEW METHOD: Apply emotional impact when email is read
+    private void ShowEmailContent(ApplicationData email)
+    {
+        if (emptySelectionPanel != null)
+            emptySelectionPanel.SetActive(false);
+
+        if (emailDisplayPanel != null)
+            emailDisplayPanel.SetActive(true);
+
+        if (companyNameText != null)
+            companyNameText.text = $"Fra: {email.job.companyName}";
+
+        if (jobTitleText != null)
+            jobTitleText.text = $"Ang din søknad på stillingen: {email.job.jobTitle}";
+
+        if (dateText != null)
+            dateText.text = $"Måned {email.submittedMonth + 2}"; //Might need to change how date is displayed later
+
+        if (resultText != null)
+        {
+            if (email.gotCallback)
+            {
+                resultText.text = "Vi ønsker å invitere deg på intervju";
+                resultText.color = new Color(0.0f, 0.0f, 0.0f); //Change color for callback text here if needed
+            }
+            else
+            {
+                resultText.text = "Takk for søknaden din";
+                resultText.color = new Color(0.0f, 0.0f, 0.0f); //Change color for rejection text here if needed
+            }
+        }
+
+        if (messageText != null)
+        {
+            if (email.gotCallback)
+            {
+                messageText.text = string.Format(callbackMessageNorwegian,
+                    email.job.jobTitle, email.job.companyName);
+            }
+            else
+            {
+                messageText.text = string.Format(rejectionMessageNorwegian,
+                    email.job.jobTitle, email.job.companyName);
+            }
+        }
+    }
+
+    private void ShowEmptySelection()
+    {
+        if (emailDisplayPanel != null)
+            emailDisplayPanel.SetActive(false);
+
+        if (emptySelectionPanel != null)
+            emptySelectionPanel.SetActive(true);
+    }
+
     private void ApplyEmotionalImpact(ApplicationData app)
     {
         float oldEnergy = GameManager.Instance.emotionalEnergy;
 
         if (app.gotCallback)
         {
-            // CALLBACK - Energy boost!
             GameManager.Instance.emotionalEnergy += GameManager.Instance.callbackEnergyBoost;
             GameManager.Instance.emotionalEnergy = Mathf.Clamp(
-                GameManager.Instance.emotionalEnergy,
-                0,
-                GameManager.Instance.maxEnergy
-            );
+                GameManager.Instance.emotionalEnergy, 0, GameManager.Instance.maxEnergy);
 
-            Debug.Log($"[ENERGY] 💚 CALLBACK! Energy: {oldEnergy} → {GameManager.Instance.emotionalEnergy} (+{GameManager.Instance.callbackEnergyBoost})");
+            Debug.Log($"[ENERGY] CALLBACK! Energy: {oldEnergy} → {GameManager.Instance.emotionalEnergy}");
         }
         else
         {
-            // REJECTION - Energy drain
             GameManager.Instance.emotionalEnergy -= GameManager.Instance.rejectionEnergyDrain;
             GameManager.Instance.emotionalEnergy = Mathf.Clamp(
-                GameManager.Instance.emotionalEnergy,
-                0,
-                GameManager.Instance.maxEnergy
-            );
+                GameManager.Instance.emotionalEnergy, 0, GameManager.Instance.maxEnergy);
 
-            Debug.Log($"[ENERGY] 💔 REJECTION! Energy: {oldEnergy} → {GameManager.Instance.emotionalEnergy} (-{GameManager.Instance.rejectionEnergyDrain})");
+            Debug.Log($"[ENERGY] REJECTION! Energy: {oldEnergy} → {GameManager.Instance.emotionalEnergy}");
         }
 
-        // Update backgrounds based on new energy level
         GameManager.Instance.UpdateBackgrounds();
-
-        Debug.Log($"[EMAIL] Emotional impact applied. Current energy: {GameManager.Instance.emotionalEnergy}");
     }
 
     private void MarkAsRead(ApplicationData app)
     {
-        // Remove from unread lists
+        if (!GameManager.Instance.readEmails.Contains(app))
+        {
+            GameManager.Instance.readEmails.Add(app);
+        }
+
         GameManager.Instance.callbacks.Remove(app);
         GameManager.Instance.rejections.Remove(app);
-
-        Debug.Log($"📧 Marked email from {app.job.companyName} as read");
     }
 
     private void CloseEmail()
     {
-        // Return to Desktop
-        SceneManager.LoadScene("2Desktop");
+        if (emailWindow != null)
+        {
+            emailWindow.CloseWindow();
+        }
+
+        if (desktopController != null)
+        {
+            desktopController.UpdateUI();
+            desktopController.UpdateEmailNotification();
+        }
     }
-
-    //private void MarkAsRead(ApplicationData app)
-    //{
-    //    // Add to read emails list
-    //    if (!GameManager.Instance.readEmails.Contains(app))
-    //    {
-    //        GameManager.Instance.readEmails.Add(app);
-    //    }
-
-    //    // Remove from unread lists
-    //    GameManager.Instance.callbacks.Remove(app);
-    //    GameManager.Instance.rejections.Remove(app);
-
-    //    Debug.Log($"📧 Marked email from {app.job.companyName} as read");
-    //}
 }

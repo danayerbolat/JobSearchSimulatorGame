@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+//Needs a LOT of fine-tuning and balancing!!
 public class ApplicationScoring : MonoBehaviour
 {
     public static ApplicationScoring Instance;
