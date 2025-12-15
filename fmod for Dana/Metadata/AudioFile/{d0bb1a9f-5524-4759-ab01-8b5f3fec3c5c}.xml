@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{d0bb1a9f-5524-4759-ab01-8b5f3fec3c5c}">
+		<property name="assetPath">
+			<value>nynning 1.wav</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>48</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>90.352937499999996</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{7221c989-1820-40a6-88a9-a20ac7f62bc6}</destination>
+		</relationship>
+	</object>
+</objects>

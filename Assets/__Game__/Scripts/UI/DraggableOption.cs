@@ -11,6 +11,9 @@ public class DraggableOption : MonoBehaviour, IBeginDragHandler, IDragHandler, I
     [Header("Optional Visual")]
     public Sprite displaySprite;   // <-- sprite to show in drop zone (e.g. photo)
 
+    [Header("Unlocking")]
+    public bool onlyAfterFirstCv = false; // <- hide on first CV
+
     [Header("References")]
     private Canvas canvas;
     private RectTransform rectTransform;

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba26b8e292fea0498a93cf3aaa0bef9, type: 3}
+  m_Name: Brygga Studio
+  m_EditorClassIdentifier: Assembly-CSharp::JobData
+  companyName: Brygga Studio
+  jobTitle: Frontend-utvikler
+  jobDescription: "Brygga Studio er et lite milj\xF8 som lager spill og apper for
+    barn og unge. Vi ser etter en utvikler som kan ogs\xE5 ta p\xE5 seg rollen som
+    interaksjonsdesigner, teste med faktiske brukere og bygge raske prototyper. Her
+    passer du godt hvis du er nysgjerrig, liker b\xE5de spill og turer ut, og ikke
+    er redd for \xE5 ta med egne erfaringer og referanser inn i prosjektene."
+  companyType: Creative Tech
+  authenticCVSuccessRate: 0.56
+  strategicCVSuccessRate: 0.44

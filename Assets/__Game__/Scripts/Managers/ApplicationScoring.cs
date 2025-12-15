@@ -1,43 +1,58 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-//Needs a LOT of fine-tuning and balancing!!
+// Needs fine-tuning & balancing, but this is wired to your current CV options.
 public class ApplicationScoring : MonoBehaviour
 {
     public static ApplicationScoring Instance;
 
     [Header("Base Success Rates")]
     [Range(0f, 1f)]
-    public float minimumSuccessRate = 0.05f; // 5% - never impossible
+    public float minimumSuccessRate = 0.05f;   // 5% - never impossible
     [Range(0f, 1f)]
-    public float maximumSuccessRate = 0.70f; // 70% - never guaranteed
+    public float maximumSuccessRate = 0.40f;   // 40% - never guaranteed
     [Range(0f, 1f)]
-    public float defaultBaseRate = 0.20f;    // 20% - default starting point
+    public float defaultBaseRate = 0.05f;    // 5% - default starting point
 
     [Header("CV Element Bonuses")]
     [Range(0f, 0.5f)]
-    public float adaptedNameBonus = 0.15f;           // Using "Joanna Bolat"
+    public float adaptedNameBonus = 0.08f;  // Using more Norwegian name
     [Range(0f, 0.5f)]
-    public float norwegianCoverLetterBonus = 0.20f;  // Norwegian-focused
+    public float norwegianCoverLetterBonus = 0.20f;  // Norsk/nøytral profil
     [Range(0f, 0.5f)]
-    public float internationalCoverLetterBonus = 0.25f; // International
+    public float internationalCoverLetterBonus = 0.15f; // Profil med bakgrunn/inkludering
     [Range(0f, 0.2f)]
-    public float hasPhotoBonus = 0.05f;              // Including any photo
+    public float hasPhotoBonus = 0.05f;  // Base photo bonus (scaled per company type)
     [Range(0f, 0.2f)]
-    public float norwegianHobbiesBonus = 0.10f;      // Norwegian hobbies
+    public float norwegianHobbiesBonus = 0.08f;  // Friluftsliv, hytteliv, osv.
+
+    [Header("Difficulty Tuning")]
+    [Tooltip("< 1 = harder, > 1 = easier")]
+    [Range(0.1f, 2f)]
+    public float difficultyMultiplier = 0.8f;
 
     [Header("Company Type Preferences")]
-    [Tooltip("Which company types value Norwegian culture fit")]
+    [Tooltip("Companies where 'culture fit' / norskhet gir litt pluss")]
     public List<string> cultureFitCompanies = new List<string>
     {
         "Tech Startup",
-        "Traditional Norwegian"
+        "Consultancy",
+        "Produktselskap"
     };
 
-    [Tooltip("Which company types value international perspective")]
+    [Tooltip("Companies where mangfold og flerspråklighet gir pluss")]
     public List<string> internationalCompanies = new List<string>
     {
-        "International"
+        "International",
+        "Creative Tech",
+        "Public Sector"
+    };
+
+    [Tooltip("Very traditional environments where 'looking Norwegian' is safest")]
+    public List<string> traditionalCompanies = new List<string>
+    {
+        "Traditional Private",
+        "Large Corporate"
     };
 
     private void Awake()
@@ -54,7 +69,7 @@ public class ApplicationScoring : MonoBehaviour
     }
 
     /// <summary>
-    /// Calculate success chance for an application based on CV choices and job
+    /// Calculate success chance for an application based on CV choices and job.
     /// </summary>
     public float CalculateSuccessChance(ApplicationData app)
     {
@@ -73,9 +88,9 @@ public class ApplicationScoring : MonoBehaviour
         score += ScoreName(cv.chosenName);
 
         // === PHOTO SCORING ===
-        score += ScorePhoto(cv.chosenPhoto);
+        score += ScorePhoto(cv.chosenPhoto, job.companyType);
 
-        // === COVER LETTER SCORING ===
+        // === PROFILE / COVER LETTER SCORING ===
         score += ScoreCoverLetter(cv.chosenCoverLetter, job.companyType);
 
         // === HOBBIES SCORING ===
@@ -87,6 +102,9 @@ public class ApplicationScoring : MonoBehaviour
         // === VOLUNTEER SCORING ===
         score += ScoreVolunteer(cv.chosenVolunteer, job.companyType);
 
+        // Apply global difficulty
+        score *= difficultyMultiplier;
+
         // Clamp to min/max
         score = Mathf.Clamp(score, minimumSuccessRate, maximumSuccessRate);
 
@@ -95,62 +113,181 @@ public class ApplicationScoring : MonoBehaviour
         return score;
     }
 
-    // === INDIVIDUAL SCORING METHODS ===
+    // =========================================================
+    // INDIVIDUAL SCORING METHODS
+    // =========================================================
 
     private float ScoreName(string chosenName)
     {
-        // Using adapted Norwegian name improves chances
-        if (chosenName == "Joanna Bolat")
+        if (string.IsNullOrEmpty(chosenName))
+            return 0f;
+
+        // Strongly Norwegianised: biggest bonus
+        if (chosenName == "Aika Moen")
         {
-            Debug.Log($"  +{adaptedNameBonus:P0} (Adapted name)");
+            Debug.Log($"  +{adaptedNameBonus:P0} (Sterkt fornorsket navn)");
             return adaptedNameBonus;
         }
 
-        // Using real name = no bonus (but not a penalty)
-        return 0f;
-    }
-
-    private float ScorePhoto(string chosenPhoto)
-    {
-        // Having a photo generally helps (shows confidence, approachability)
-        if (!string.IsNullOrEmpty(chosenPhoto) &&
-            chosenPhoto != "No photo" &&
-            chosenPhoto != "Ikke inkluder bilde")
+        // Partially adapted: smaller bonus
+        if (chosenName == "Aika Mukhan")
         {
-            Debug.Log($"  +{hasPhotoBonus:P0} (Has photo)");
-            return hasPhotoBonus;
+            float bonus = adaptedNameBonus * 0.5f;
+            Debug.Log($"  +{bonus:P0} (Delvis fornorsket navn)");
+            return bonus;
         }
 
+        // Fully original / other names: no bonus
         return 0f;
     }
 
-    private float ScoreCoverLetter(string coverLetter, string companyType)
+    private float ScorePhoto(string chosenPhoto, string companyType)
     {
+        if (string.IsNullOrEmpty(chosenPhoto))
+            return 0f;
+
+        string lower = chosenPhoto.ToLowerInvariant();
+
+        bool isNoPhoto = lower.Contains("ikke inkluder") || lower.Contains("no photo");
+        bool isCulturePhoto = lower.Contains("kultur") || lower.Contains("culture");
+        bool isBizPhoto = lower.Contains("profesjonell") || lower.Contains("professional") ||
+                              lower.Contains("business");
+
         float bonus = 0f;
 
-        // Norwegian-focused cover letter
-        if (coverLetter.Contains("Norsk") || coverLetter.Contains("Norwegian"))
+        // 1) DIVERSITY-POSITIVE COMPANIES
+        if (internationalCompanies.Contains(companyType))
         {
-            // Big bonus for traditional/public sector companies
-            if (companyType == "Traditional Norwegian" || companyType == "Public Sector")
+            if (isCulturePhoto)
             {
-                bonus = norwegianCoverLetterBonus;
-                Debug.Log($"  +{bonus:P0} (Norwegian focus matches {companyType})");
+                bonus = hasPhotoBonus * 1.5f;
+                Debug.Log($"  +{bonus:P0} (Culture photo matches {companyType})");
             }
-            else if (cultureFitCompanies.Contains(companyType))
+            else if (isBizPhoto)
             {
-                // Smaller bonus for culture-fit companies
-                bonus = norwegianCoverLetterBonus * 0.5f;
-                Debug.Log($"  +{bonus:P0} (Norwegian focus helps with {companyType})");
+                bonus = hasPhotoBonus * 0.5f;
+                Debug.Log($"  +{bonus:P0} (Neutral business photo at {companyType})");
+            }
+            else if (isNoPhoto)
+            {
+                bonus = 0f;
+                Debug.Log("  0% (No photo – neutral for diversity-focused company)");
+            }
+            else
+            {
+                bonus = hasPhotoBonus;
+                Debug.Log($"  +{bonus:P0} (Generic photo at {companyType})");
             }
         }
-        // International perspective
-        else if (coverLetter.Contains("International"))
+        // 2) CULTURE-FIT COMPANIES
+        else if (cultureFitCompanies.Contains(companyType))
         {
+            if (isBizPhoto)
+            {
+                bonus = hasPhotoBonus;
+                Debug.Log($"  +{bonus:P0} (Business photo fits {companyType})");
+            }
+            else if (isNoPhoto)
+            {
+                bonus = hasPhotoBonus * 0.6f;
+                Debug.Log($"  +{bonus:P0} (No photo is 'safe' at {companyType})");
+            }
+            else if (isCulturePhoto)
+            {
+                bonus = -hasPhotoBonus * 0.4f;
+                Debug.Log($"{bonus:P0} (Culture photo reads less 'professional' at {companyType})");
+            }
+            else
+            {
+                bonus = hasPhotoBonus * 0.5f;
+                Debug.Log($"  +{bonus:P0} (Generic photo at {companyType})");
+            }
+        }
+        // 3) VERY TRADITIONAL COMPANIES
+        else if (traditionalCompanies.Contains(companyType))
+        {
+            if (isBizPhoto)
+            {
+                bonus = hasPhotoBonus * 1.2f;
+                Debug.Log($"  +{bonus:P0} (Formal photo fits very traditional {companyType})");
+            }
+            else if (isNoPhoto)
+            {
+                bonus = hasPhotoBonus * 0.3f;
+                Debug.Log($"  +{bonus:P0} (No photo – slightly safer at {companyType})");
+            }
+            else if (isCulturePhoto)
+            {
+                bonus = -hasPhotoBonus;
+                Debug.Log($"{bonus:P0} (Culture photo clashes with traditional {companyType})");
+            }
+        }
+        // 4) Fallback
+        else
+        {
+            if (!isNoPhoto)
+            {
+                bonus = hasPhotoBonus;
+                Debug.Log($"  +{bonus:P0} (Has photo)");
+            }
+        }
+
+        return bonus;
+    }
+
+    private float ScoreCoverLetter(string profileText, string companyType)
+    {
+        if (string.IsNullOrEmpty(profileText))
+            return 0f;
+
+        float bonus = 0f;
+
+        // Your two profiles:
+        // 1) "Strukturert og lærevillig junior IT-utvikler ..."
+        // 2) "Junior IT-utvikler med bakgrunn fra Kina ..."
+        bool isNorwegianProfile =
+            profileText.StartsWith("Strukturert og lærevillig");
+
+        bool isBackgroundProfile =
+            profileText.Contains("bakgrunn fra Kina") ||
+            profileText.Contains("Flerspråklig");
+
+        if (isNorwegianProfile)
+        {
+            // Culture-fit and traditional like "nøytral norsk" profil
+            if (cultureFitCompanies.Contains(companyType))
+            {
+                bonus = norwegianCoverLetterBonus;
+                Debug.Log($"  +{bonus:P0} (Norsk, nøytral profil matcher {companyType})");
+            }
+            else if (traditionalCompanies.Contains(companyType))
+            {
+                bonus = norwegianCoverLetterBonus * 1.2f;
+                Debug.Log($"  +{bonus:P0} (Norsk, trygg profil verdsettes av {companyType})");
+            }
+            else if (internationalCompanies.Contains(companyType))
+            {
+                bonus = norwegianCoverLetterBonus * 0.5f;
+                Debug.Log($"  +{bonus:P0} (Norsk profil – ok, men ikke avgjørende i {companyType})");
+            }
+        }
+        else if (isBackgroundProfile)
+        {
+            // Diversity-positive environments value this most
             if (internationalCompanies.Contains(companyType))
             {
                 bonus = internationalCoverLetterBonus;
-                Debug.Log($"  +{bonus:P0} (International perspective matches {companyType})");
+                Debug.Log($"  +{bonus:P0} (Profil med minoritetsbakgrunn verdsettes i {companyType})");
+            }
+            else if (cultureFitCompanies.Contains(companyType))
+            {
+                bonus = internationalCoverLetterBonus * 0.5f;
+                Debug.Log($"  +{bonus:P0} (Profil med bakgrunn gir litt ekstra i {companyType})");
+            }
+            else if (traditionalCompanies.Contains(companyType))
+            {
+                bonus = -internationalCoverLetterBonus * 0.5f;
+                Debug.Log($"{bonus:P0} (Profil med bakgrunn kan leses som 'mindre trygg' i {companyType})");
             }
         }
 
@@ -162,20 +299,22 @@ public class ApplicationScoring : MonoBehaviour
         if (hobbies == null || hobbies.Length == 0)
             return 0f;
 
-        // Check for Norwegian hobbies
+        // Check for very "Norwegian" hobbies
         bool hasNorwegianHobbies = false;
         foreach (string hobby in hobbies)
         {
-            if (hobby.Contains("Ski") || hobby.Contains("Hiking") ||
-                hobby.Contains("Fottur") || hobby.Contains("Friluftsliv") ||
-                hobby.Contains("Cabin") || hobby.Contains("Hytte"))
+            if (hobby.Contains("Friluftsliv") ||
+                hobby.Contains("Hytteliv") ||
+                hobby.Contains("Langrenn") ||
+                hobby.Contains("Soppsanking"))
             {
                 hasNorwegianHobbies = true;
                 break;
             }
         }
 
-        if (hasNorwegianHobbies && cultureFitCompanies.Contains(companyType))
+        if (hasNorwegianHobbies &&
+            (cultureFitCompanies.Contains(companyType) || traditionalCompanies.Contains(companyType)))
         {
             Debug.Log($"  +{norwegianHobbiesBonus:P0} (Norwegian hobbies match {companyType})");
             return norwegianHobbiesBonus;
@@ -191,40 +330,39 @@ public class ApplicationScoring : MonoBehaviour
 
         float bonus = 0f;
 
-        // Check what languages are shown
         bool showsNorwegian = false;
         bool showsEnglish = false;
-        bool showsMandarin = false;
+        bool showsChinese = false;
         bool showsKazakh = false;
 
         foreach (string lang in languages)
         {
-            if (lang.Contains("Norwegian") || lang.Contains("Norsk"))
+            if (lang.Contains("Norsk") || lang.Contains("Norwegian"))
                 showsNorwegian = true;
-            if (lang.Contains("English") || lang.Contains("Engelsk"))
+            if (lang.Contains("Engelsk") || lang.Contains("English"))
                 showsEnglish = true;
-            if (lang.Contains("Mandarin"))
-                showsMandarin = true;
+            if (lang.Contains("Kinesisk") || lang.Contains("Mandarin"))
+                showsChinese = true;
             if (lang.Contains("Kazakh") || lang.Contains("Kasakhisk"))
                 showsKazakh = true;
         }
 
-        // International companies value multilingual
+        // Diversity-positive companies value multilingual
         if (internationalCompanies.Contains(companyType))
         {
-            if (showsMandarin || showsKazakh)
+            if (showsChinese || showsKazakh)
             {
                 bonus = 0.10f;
-                Debug.Log($"  +{bonus:P0} (Multilingual valued by {companyType})");
+                Debug.Log($"  +{bonus:P0} (Flerspråklighet verdsettes i {companyType})");
             }
         }
-        // Traditional companies prefer just Norwegian + English
-        else if (companyType == "Traditional Norwegian")
+        // Very traditional companies prefer only Norwegian + English
+        else if (traditionalCompanies.Contains(companyType))
         {
-            if (showsNorwegian && showsEnglish && !showsMandarin && !showsKazakh)
+            if (showsNorwegian && showsEnglish && !showsChinese && !showsKazakh)
             {
                 bonus = 0.08f;
-                Debug.Log($"  +{bonus:P0} (European languages only for {companyType})");
+                Debug.Log($"  +{bonus:P0} (Bare Norsk + Engelsk passer best i {companyType})");
             }
         }
 
@@ -240,30 +378,30 @@ public class ApplicationScoring : MonoBehaviour
 
         foreach (string vol in volunteer)
         {
-            // Diversity-focused volunteer work
-            if (vol.Contains("Immigrant") || vol.Contains("Innvandrer") || vol.Contains("minoritet"))
+            // Diversity-focused volunteer work (mentor innvandrerungdom osv.)
+            if (vol.Contains("innvandrer") || vol.Contains("Innvandrer") ||
+                vol.Contains("minoritet"))
             {
-                // Good for international companies
                 if (internationalCompanies.Contains(companyType))
                 {
                     bonus = 0.08f;
                     Debug.Log($"  +{bonus:P0} (Diversity work valued by {companyType})");
                 }
-                // Slight penalty for very traditional companies
-                else if (companyType == "Traditional Norwegian")
+                else if (traditionalCompanies.Contains(companyType))
                 {
                     bonus = -0.05f;
                     Debug.Log($"  {bonus:P0} (Diversity work not prioritized by {companyType})");
                 }
             }
-            // Tech/student org volunteer work
-            else if (vol.Contains("Tech") || vol.Contains("student") || vol.Contains("linjeforening"))
+            // Tech/student org volunteer work (linjeforening, kodeklubb)
+            else if (vol.Contains("linjeforening") ||
+                     vol.Contains("kodeklubb") ||
+                     vol.Contains("student"))
             {
-                // Positive for tech companies
                 if (companyType == "Tech Startup" || companyType == "Consultancy")
                 {
                     bonus = 0.06f;
-                    Debug.Log($"  +{bonus:P0} (Tech volunteer work valued by {companyType})");
+                    Debug.Log($"  +{bonus:P0} (Tech/student volunteer work valued by {companyType})");
                 }
             }
         }
@@ -272,18 +410,19 @@ public class ApplicationScoring : MonoBehaviour
     }
 
     /// <summary>
-    /// Get a text description of why the success rate is what it is (for debugging/player feedback)
+    /// Text description for debug / potential in-game explanation.
     /// </summary>
     public string GetScoringBreakdown(ApplicationData app)
     {
-        string breakdown = $"Søknad til {app.job.companyName}:\n";
-        breakdown += $"Base sjanse: {defaultBaseRate:P0}\n";
+        string breakdown = $"Søknad til {app.job.companyName} ({app.job.companyType}):\n";
+        float baseShown = defaultBaseRate * difficultyMultiplier;
+        breakdown += $"Base sjanse: {baseShown:P0}\n";
 
-        // Recalculate with logging
         float finalChance = CalculateSuccessChance(app);
-
         breakdown += $"\nEndelig sjanse: {finalChance:P0}";
 
         return breakdown;
     }
 }
+
+

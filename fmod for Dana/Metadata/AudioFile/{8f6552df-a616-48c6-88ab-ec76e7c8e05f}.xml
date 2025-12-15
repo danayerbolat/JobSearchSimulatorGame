@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{8f6552df-a616-48c6-88ab-ec76e7c8e05f}">
+		<property name="assetPath">
+			<value>dana v3 glad final_4#01.5.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>48</value>
+		</property>
+		<property name="channelCount">
+			<value>1</value>
+		</property>
+		<property name="length">
+			<value>2.4705833333333334</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{7221c989-1820-40a6-88a9-a20ac7f62bc6}</destination>
+		</relationship>
+	</object>
+</objects>

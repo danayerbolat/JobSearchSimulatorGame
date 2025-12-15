@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.Linq;
+using FMODUnity;
 using static UnityEngine.EventSystems.EventTrigger;
 
 public class GameManager : MonoBehaviour
@@ -14,12 +17,12 @@ public class GameManager : MonoBehaviour
     public float emotionalEnergy = 100f;
     public float maxEnergy = 100f;
     public float authenticityScore = 100f; // Hidden from player, how to give feedback?
-    public float energyDrainRate = 10f; //Energy lost by time progressing
+    public float energyDrainRate; //Energy lost by time progressing
 
     [Header("Energy Impact Settings")]
-    public float callbackEnergyBoost = 25f;    // Energy gained from callback
-    public float rejectionEnergyDrain = 20f;   // Energy lost from rejection
-    public float applicationEnergyCost = 5f;   // Energy to submit application
+    public float callbackEnergyBoost;    // Energy gained from callback
+    public float rejectionEnergyDrain;   // Energy lost from rejection
+    public float applicationEnergyCost;   // Energy to submit application
 
     [Header("Desktop Backgrounds")]
     public GameObject fullEnergyBackground;
@@ -35,6 +38,14 @@ public class GameManager : MonoBehaviour
 
     [Header("Current Application")]
     public JobData currentJobApplyingTo = null;
+
+    [Header("Ending Thresholds")]
+    public float lowAuthenticityThreshold = 40f;
+    public int highCallbackThreshold = 3;
+
+    [Header("Narrative Tweaks")]
+    public bool forceFirstApplicationFail = true;
+    private bool hasForcedFirstApplication = false;
 
     private int updateBackgroundCallCount = 0; 
 
@@ -81,6 +92,7 @@ public class GameManager : MonoBehaviour
 
         UpdateBackgrounds();
         ProcessApplications();
+        CheckForGameEnd();
     }
 
     private void ProcessApplications()
@@ -107,8 +119,33 @@ public class GameManager : MonoBehaviour
     {
         app.responseReceived = true;
 
+        // --- 1) FORCE FIRST APPLICATION TO FAIL (narrative) ---
+        if (forceFirstApplicationFail && !hasForcedFirstApplication)
+        {
+            ApplicationData firstApp = (submittedApplications.Count > 0)
+                ? submittedApplications[0]
+                : null;
+
+            if (app == firstApp)
+            {
+                hasForcedFirstApplication = true;
+
+                app.successChance = 0f;
+                app.gotCallback = false;
+                rejections.Add(app);
+                allEmails.Add(app);
+
+                Debug.Log("[GM] Forced first application to fail for narrative reasons.");
+                return;
+            }
+        }
+
+        // --- 2) Normal scoring ---
         float successChance = ApplicationScoring.Instance.CalculateSuccessChance(app);
         app.successChance = successChance;
+
+        string breakdown = ApplicationScoring.Instance.GetScoringBreakdown(app);
+        Debug.Log(breakdown);
 
         float roll = Random.Range(0f, 1f);
 
@@ -147,15 +184,19 @@ public class GameManager : MonoBehaviour
             if (fullEnergyBackground != null)
             {
                 fullEnergyBackground.SetActive(true);
+                mediumEnergyBackground.SetActive(false);
+                lowEnergyBackground.SetActive(false);
                 //Debug.Log("Background: Full Energy (bright)");
             }
         }
-        else if (energyPercent > 20f)
+        else if (energyPercent > 25f)
         {
             // Medium energy: Show darker background
             if (mediumEnergyBackground != null)
             {
+                fullEnergyBackground.SetActive(false);
                 mediumEnergyBackground.SetActive(true);
+                lowEnergyBackground.SetActive(false);
                 //Debug.Log("Background: Medium Energy (darker)");
             }
         }
@@ -164,6 +205,8 @@ public class GameManager : MonoBehaviour
             // Low energy: Show oppressive dark background
             if (lowEnergyBackground != null)
             {
+                fullEnergyBackground.SetActive(false);
+                mediumEnergyBackground.SetActive(false);
                 lowEnergyBackground.SetActive(true);
                 //Debug.Log("Background: Low Energy (dark)");
             }
@@ -187,5 +230,63 @@ public class GameManager : MonoBehaviour
     {
         // Has unread if there are callbacks OR rejections that haven't been read
         return (callbacks.Count > 0 || rejections.Count > 0);
+    }
+
+    public void GoToEnding(EndingType chosenEnding)
+    {
+        EndingData.ApplyFromGame(this, chosenEnding);
+
+        // Use the same scene name everywhere
+        SceneManager.LoadScene("1EndingScene");
+    }
+
+    public void CheckForGameEnd()
+    {
+        bool outOfEnergy = emotionalEnergy <= 0f;
+        bool timeUp = currentMonth >= maxMonths;
+
+        if (!outOfEnergy && !timeUp)
+            return; // Game continues
+
+        // Decide ending type based on final state
+        EndingType chosenEnding;
+
+        if (outOfEnergy)
+        {
+            chosenEnding = EndingType.Burnout;
+        }
+        else
+        {
+            bool lowAuth = authenticityScore < lowAuthenticityThreshold;
+
+            // "Any callbacks" looks at allEmails
+            bool anyCallbacks = allEmails != null &&
+                                allEmails.Any(a => a.responseReceived && a.gotCallback);
+            int totalCallbacks = allEmails.Count(a => a.responseReceived && a.gotCallback);
+
+            if (lowAuth && anyCallbacks)
+            {
+                // Got some external success, but lost a lot av seg selv
+                chosenEnding = EndingType.HollowSuccess;
+            }
+            else if (!lowAuth && !anyCallbacks)
+            {
+                // Held onto self, but system didn’t reward
+                chosenEnding = EndingType.StayedYourself;
+            }
+            else if ((authenticityScore == 100) && (totalCallbacks >= 2) )
+            {
+                // Best case: kept self and got callbacks
+                chosenEnding = EndingType.AuthenticSuccess;
+            }
+            else
+            {
+                // Messy middle
+                chosenEnding = EndingType.InBetween;
+            }
+        }
+
+        // This will also fill EndingData and load the ending scene
+        GoToEnding(chosenEnding);
     }
 }

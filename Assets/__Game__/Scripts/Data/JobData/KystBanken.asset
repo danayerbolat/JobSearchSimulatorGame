@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba26b8e292fea0498a93cf3aaa0bef9, type: 3}
+  m_Name: KystBanken
+  m_EditorClassIdentifier: Assembly-CSharp::JobData
+  companyName: Kystbanken
+  jobTitle: Junior IT-utvikler
+  jobDescription: "Kystbanken moderniserer digitale l\xF8sninger for privatkunder
+    og sm\xE5 bedrifter. Vi s\xF8ker en junior utvikler til IT-avdelingen som kan
+    bidra til stabile og sikre systemer. Du m\xE5 ha god forst\xE5else for norsk
+    forretningskultur og kunne kommunisere sikkert med ulike deler av organisasjonen.
+    Erfaring fra norsk arbeidsliv og et profesjonelt nettverk i bransjen er en fordel."
+  companyType: Large Corporate
+  authenticCVSuccessRate: 0.3
+  strategicCVSuccessRate: 0.6

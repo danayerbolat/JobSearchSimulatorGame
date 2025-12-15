@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba26b8e292fea0498a93cf3aaa0bef9, type: 3}
+  m_Name: Digitaliseringsenheten
+  m_EditorClassIdentifier: Assembly-CSharp::JobData
+  companyName: Digitaliseringsenheten
+  jobTitle: Digital system utvikler
+  jobDescription: "Digitaliseringsenheten i Trondheim utvikler nye digitale tjenester
+    for innbyggere og ansatte i Trondheim kommune. Vi ser etter en utvikler som kan
+    kombinere teknisk forst\xE5else med brukerperspektiv. Du m\xE5 kunne kommunisere
+    tydelig p\xE5 norsk, og er opptatt av samarbeid med ulike fagmilj\xF8er i offentlig
+    sektor. Erfaring fra frivillig arbeid og flerspr\xE5klig bakgrunn kan v\xE6re
+    en styrke i m\xF8te med byens innbyggere."
+  companyType: Public Sector
+  authenticCVSuccessRate: 0.7
+  strategicCVSuccessRate: 0.6

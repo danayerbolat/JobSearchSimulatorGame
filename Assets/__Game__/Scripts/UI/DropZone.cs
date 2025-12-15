@@ -11,6 +11,8 @@ public class DropZone : MonoBehaviour, IDropHandler
 
     [Header("Display")]
     public TextMeshProUGUI displayText;
+    [Tooltip("Custom label to show in placeholder text. E.g., 'NAVN', 'FOTO', 'PROFIL'")]
+    public string customDisplayLabel = ""; // If empty, will use acceptedType
 
     [Header("Image Display (optional)")]
     public bool useImageForValue = false; // tick this for the photo field
@@ -85,6 +87,8 @@ public class DropZone : MonoBehaviour, IDropHandler
             if (adjustFontSizeOnDrop)
             {
                 displayText.fontSize = droppedFontSize;
+                displayText.alignment = TextAlignmentOptions.Left;
+                displayText.lineSpacing = -30f;
             }
         }
 
@@ -117,7 +121,9 @@ public class DropZone : MonoBehaviour, IDropHandler
 
         if (displayText != null)
         {
-            displayText.text = $"[Drop {acceptedType} here]";
+            // Use custom label if provided, otherwise use acceptedType
+            string label = string.IsNullOrEmpty(customDisplayLabel) ? acceptedType : customDisplayLabel;
+            displayText.text = $"DRA INN {label} HER";
 
             if (adjustFontSizeOnDrop)
             {
