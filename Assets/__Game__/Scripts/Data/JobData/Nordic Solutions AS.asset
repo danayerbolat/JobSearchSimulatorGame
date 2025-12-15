@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba26b8e292fea0498a93cf3aaa0bef9, type: 3}
+  m_Name: Nordic Solutions AS
+  m_EditorClassIdentifier: Assembly-CSharp::JobData
+  companyName: Nordic Solutions AS
+  jobTitle: 'Backend-utvikler '
+  jobDescription: "Nordic Solutions utvikler egne fagsystemer som brukes av bedrifter
+    over hele landet. Som backend-utvikler hos oss vil du jobbe tett med resten av
+    utviklerteamet og driftsmilj\xF8et for \xE5 sikre stabile og raske tjenester.
+    Siden mye av kommunikasjonen v\xE5r skjer p\xE5 norsk, forventer vi gode spr\xE5kferdigheter
+    og evne til \xE5 samarbeide godt p\xE5 tvers av avdelingene."
+  companyType: Produktselskap
+  authenticCVSuccessRate: 0.2
+  strategicCVSuccessRate: 0.56

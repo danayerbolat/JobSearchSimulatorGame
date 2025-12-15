@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba26b8e292fea0498a93cf3aaa0bef9, type: 3}
+  m_Name: FlowTech AS
+  m_EditorClassIdentifier: Assembly-CSharp::JobData
+  companyName: FlowTech AS
+  jobTitle: Fullstack-utvikler
+  jobDescription: "FlowTech er en ung startup i Trondheim som lager l\xF8sninger
+    for fintech- og betalingsbransjen. Vi er et lite, tett team som jobber med React,
+    Node.js og skyplattformer, og som deler b\xE5de kode, pizza og av og til en skitur.
+    Arbeidsspr\xE5ket er norsk, og vi ser etter en kollega som b\xE5de bidrar faglig
+    og passer inn sosialt i et uformelt milj\xF8."
+  companyType: Tech Startup
+  authenticCVSuccessRate: 0.4
+  strategicCVSuccessRate: 0.6

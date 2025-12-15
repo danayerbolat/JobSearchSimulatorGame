@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba26b8e292fea0498a93cf3aaa0bef9, type: 3}
+  m_Name: ELVA AS
+  m_EditorClassIdentifier: Assembly-CSharp::JobData
+  companyName: ELVA AS
+  jobTitle: Junior IT-konsulent
+  jobDescription: "ELVA er et konsulentselskap som hjelper kunder med alt fra nye
+    selvbetjeningsl\xF8sninger til modernisering av gamle fagsystemer. Som junior
+    hos oss f\xE5r du tett oppf\xF8lging, strukturert faglig utvikling og tidlig
+    ansvar i prosjekt. Du b\xF8r trives med \xE5 m\xF8te kunder, kommunisere tydelig
+    med de og trives i \xE5 samarbeide i tverrfaglige team. Erfaring fra verv teller
+    positivt n\xE5r vi vurderer kandidater."
+  companyType: Consultancy
+  authenticCVSuccessRate: 0.2
+  strategicCVSuccessRate: 0.4

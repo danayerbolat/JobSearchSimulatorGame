@@ -1,8 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class EmailController : MonoBehaviour, IResettable
 {
@@ -27,7 +28,7 @@ public class EmailController : MonoBehaviour, IResettable
 
     [Header("Email Messages")]
     [TextArea(3, 6)]
-    public string callbackMessageNorwegian = "Gratulerer!\n\nVi vil gjerne invitere deg til intervju for stillingen som {0}.\n\nVennligst kontakt oss for å avtale tidspunkt.\n\nMed vennlig hilsen,\n{1}";
+    public string callbackMessageNorwegian = "Gratulerer!\n\nVi vil gjerne invitere deg til intervju for stillingen som {0}.\n\nVi kontakter deg for å avtale tidspunkt.\n\nMed vennlig hilsen,\n{1}";
 
     [TextArea(3, 6)]
     public string rejectionMessageNorwegian = "Takk for din søknad til stillingen som {0}.\n\nDessverre må vi meddele at vi har valgt å gå videre med andre kandidater denne gangen.\n\nVi ønsker deg lykke til videre i jobbsøket.\n\nMed vennlig hilsen,\n{1}";
@@ -42,6 +43,9 @@ public class EmailController : MonoBehaviour, IResettable
     public TMP_FontAsset listFont;                           // assign LTKai-1 SDF here
     public Color listTextColor = new Color32(0x37, 0x27, 0x27, 0xFF); // #372727
     public Color listBackgroundColor = new Color(0.98f, 0.98f, 0.98f); // set in Inspector
+
+    [Header("Monologue Settings")]
+    public float monologueDelay = 0.4f; // adjust to taste
 
     private void Start()
     {
@@ -104,7 +108,8 @@ public class EmailController : MonoBehaviour, IResettable
 
             if (firstUnread != null)
             {
-                SelectEmail(firstUnread);
+                // Auto-show it, but don't apply impact/monologue yet
+                SelectEmail(firstUnread, false);
             }
         }
     }
@@ -155,7 +160,7 @@ public class EmailController : MonoBehaviour, IResettable
         colors.pressedColor = new Color(0.8f, 0.9f, 1.0f);
         colors.selectedColor = new Color(0.85f, 0.92f, 1.0f);
         btn.colors = colors;
-        btn.onClick.AddListener(() => SelectEmail(email));
+        btn.onClick.AddListener(() => SelectEmail(email, true));
 
         // Layout
         VerticalLayoutGroup layout = item.AddComponent<VerticalLayoutGroup>();
@@ -212,23 +217,29 @@ public class EmailController : MonoBehaviour, IResettable
     }
 
 
-    public void SelectEmail(ApplicationData email)
+    public void SelectEmail(ApplicationData email, bool triggeredByClick = false)
     {
         if (email == null) return;
 
         currentlySelectedEmail = email;
         ShowEmailContent(email);
 
-        // Apply impact if unread
+        // Was this email unread before this selection?
         bool wasUnread = GameManager.Instance.callbacks.Contains(email) ||
                          GameManager.Instance.rejections.Contains(email);
 
-        if (wasUnread)
+        // Only apply impact + monologue if:
+        //  - it WAS unread, and
+        //  - this selection came from an actual click
+        if (triggeredByClick && wasUnread)
         {
             ApplyEmotionalImpact(email);
             MarkAsRead(email);
             RefreshEmailList();
-            SelectEmail(email); // Re-select after refresh
+
+            // Re-select the same email after refresh, but this time
+            // as a non-clicked selection (just to show it, no impact)
+            SelectEmail(email, false);
 
             if (desktopController != null)
             {
@@ -313,7 +324,30 @@ public class EmailController : MonoBehaviour, IResettable
             Debug.Log($"[ENERGY] REJECTION! Energy: {oldEnergy} → {GameManager.Instance.emotionalEnergy}");
         }
 
+        float newEnergy = GameManager.Instance.emotionalEnergy;
         GameManager.Instance.UpdateBackgrounds();
+
+        // 🔹 Show Aika's monologue after a short delay
+        if (AikaMonologueManager.Instance != null)
+        {
+            StartCoroutine(DelayedMonologue(app, oldEnergy, newEnergy));
+        }
+    }
+
+    private IEnumerator DelayedMonologue(ApplicationData app, float oldEnergy, float newEnergy)
+    {
+        // Wait a bit so the player can see the email first
+        yield return new WaitForSeconds(monologueDelay);
+
+        if (AikaMonologueManager.Instance != null)
+        {
+            AikaMonologueManager.Instance.OnEmailOpened(
+                app,
+                oldEnergy,
+                newEnergy,
+                app.authenticityCost
+            );
+        }
     }
 
     private void MarkAsRead(ApplicationData app)

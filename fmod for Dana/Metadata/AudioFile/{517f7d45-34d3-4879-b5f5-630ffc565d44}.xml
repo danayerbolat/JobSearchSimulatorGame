@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{517f7d45-34d3-4879-b5f5-630ffc565d44}">
+		<property name="assetPath">
+			<value>amb.wav</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>48</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>58.709333333333333</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{7221c989-1820-40a6-88a9-a20ac7f62bc6}</destination>
+		</relationship>
+	</object>
+</objects>

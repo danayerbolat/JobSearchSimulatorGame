@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eba26b8e292fea0498a93cf3aaa0bef9, type: 3}
+  m_Name: Myrli Handel
+  m_EditorClassIdentifier: Assembly-CSharp::JobData
+  companyName: Myrli Handel AS
+  jobTitle: Fullstack utvikler
+  jobDescription: "Myrli er en norsk kjede innen m\xF8bler og interi\xF8r med butikker
+    over store deler av landet. Netthandel blir stadig viktigere for oss, og vi bygger
+    n\xE5 opp et lite digitalteam ved hovedkontoret i Trondheim. Vi s\xF8ker en utvikler
+    som kan gj\xF8re nettbutikken v\xE5r enkel og oversiktlig for kunder, og som
+    trives i et uformelt milj\xF8 der \xABalle kjenner alle\xBB. Gode norskkunnskaper
+    og forst\xE5else for norske handlevaner er viktig i denne rollen."
+  companyType: Traditional Private
+  authenticCVSuccessRate: 0.1
+  strategicCVSuccessRate: 0.45

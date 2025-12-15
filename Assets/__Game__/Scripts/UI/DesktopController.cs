@@ -21,7 +21,6 @@ public class DesktopController : MonoBehaviour
     public GameObject lowEnergyBackground;
 
     [Header("Buttons")]
-    public Button cvButton;
     public Button jobBoardButton;
     public Button emailButton;
     public Button calendarButton;
@@ -29,9 +28,29 @@ public class DesktopController : MonoBehaviour
     [Header("Email Notification")]
     public GameObject emailNotif;
 
+    [Header("CV Icons")]
+    public Transform cvIconContainer;   // e.g. a RectTransform on the desktop canvas
+    public GameObject cvIconPrefab;     // prefab with icon + TMP label
+
+    private int cvVersionCounter = 0;
+
+    [Header("CV Icon Layout")]
+    public int iconsPerRow = 4;
+    public Vector2 firstIconOffset = new Vector2(40f, -40f);  // start position inside container
+    public Vector2 iconSpacing   = new Vector2(140f, -150f);  // horizontal / vertical spacing
+    public float jitterRange = 10f; // try 5–15
+
     [Header("Debug Panel")]
     public GameObject debugPanel;
     public TextMeshProUGUI debugText;
+
+    [Header("Tutorial")]
+    public GameObject tutorialOverlay;
+
+    [Header("Month Display")]
+    public GameObject monthDisplayPanel;
+    public TextMeshProUGUI monthDisplayText;
+    private Coroutine hideMonthRoutine;
 
     private void Start()
     {
@@ -44,7 +63,6 @@ public class DesktopController : MonoBehaviour
         UpdateEmailNotification();
 
         // Add listeners to buttons
-        cvButton.onClick.AddListener(OpenCVFolder);
         jobBoardButton.onClick.AddListener(OpenJobBoard);
         emailButton.onClick.AddListener(OpenEmail);
         calendarButton.onClick.AddListener(TimeSkip); //Clicking here advances time
@@ -53,6 +71,49 @@ public class DesktopController : MonoBehaviour
         if (debugPanel != null)
         {
             debugPanel.SetActive(false);
+        }
+
+        // Setup tutorial overlay
+        SetupTutorialOverlay();
+
+        // Hide month display at start
+        if (monthDisplayPanel != null)
+        {
+            monthDisplayPanel.SetActive(false);
+        }
+    }
+
+    private void SetupTutorialOverlay()
+    {
+        if (tutorialOverlay != null)
+        {
+            tutorialOverlay.SetActive(true);
+
+            // Add listener for any click to dismiss
+            Button overlayButton = tutorialOverlay.GetComponent<Button>();
+            if (overlayButton != null)
+            {
+                overlayButton.onClick.AddListener(DismissTutorial);
+            }
+            else
+            {
+                // If there's no button, add a click event directly to the panel
+                Image overlayImage = tutorialOverlay.GetComponent<Image>();
+                if (overlayImage != null)
+                {
+                    Button btn = tutorialOverlay.AddComponent<Button>();
+                    btn.onClick.AddListener(DismissTutorial);
+                }
+            }
+        }
+    }
+
+    private void DismissTutorial()
+    {
+        if (tutorialOverlay != null)
+        {
+            tutorialOverlay.SetActive(false);
+            Debug.Log("[TUTORIAL] Tutorial dismissed");
         }
     }
 
@@ -110,11 +171,15 @@ public class DesktopController : MonoBehaviour
     //I dont think UpdateUI is necessary since months and energy is not displayed on desktop anymore
     public void UpdateUI()
     {
-        // Update week display
-        dateText.text = $"Month {GameManager.Instance.currentMonth}";
+        if (GameManager.Instance == null) return;
 
-        // Update energy display
-        energyText.text = $"Energy: {GameManager.Instance.emotionalEnergy:F0}";
+        // Example: "Måned 3 / 10"
+        if (dateText != null)
+        {
+            int m = GameManager.Instance.currentMonth;
+            int max = GameManager.Instance.maxMonths;
+            dateText.text = $"Måned {m} / {max}";
+        }
     }
 
     public void UpdateEmailNotification()
@@ -154,12 +219,6 @@ public class DesktopController : MonoBehaviour
     }
 
     // Button functions
-    private void OpenCVFolder() //This one might not be needed at all... 
-    {
-        ShowDebugMessage("CV Folder clicked! (Scene not built yet)");
-        Debug.Log("CV Folder opened");
-    }
-
     private void OpenJobBoard()
     {
         if (jobBoardWindow != null)
@@ -178,8 +237,41 @@ public class DesktopController : MonoBehaviour
 
     private void TimeSkip()
     {
-        ShowDebugMessage("Calendar clicked - advancing week!");
+        ShowMonthDisplay();
         AdvanceTime();
+    }
+
+    private void ShowMonthDisplay()
+    {
+        if (monthDisplayPanel == null || monthDisplayText == null)
+            return;
+
+        // Stop any existing hide routine
+        if (hideMonthRoutine != null)
+        {
+            StopCoroutine(hideMonthRoutine);
+        }
+
+        // Update text with current month
+        monthDisplayText.text = $"Måned {GameManager.Instance.currentMonth + 1}";
+
+        // Show panel
+        monthDisplayPanel.SetActive(true);
+
+        // Hide after 3 seconds
+        hideMonthRoutine = StartCoroutine(HideMonthDisplayAfterDelay());
+    }
+
+    private System.Collections.IEnumerator HideMonthDisplayAfterDelay()
+    {
+        yield return new WaitForSeconds(2f);
+
+        if (monthDisplayPanel != null)
+        {
+            monthDisplayPanel.SetActive(false);
+        }
+
+        hideMonthRoutine = null;
     }
 
     private void AdvanceTime()
@@ -187,40 +279,63 @@ public class DesktopController : MonoBehaviour
         // Check if the week limit is hit
         if (GameManager.Instance.currentMonth >= GameManager.Instance.maxMonths)
         {
-            ShowDebugMessage("You've reached the end! Time's up.");
             return; // Don't advance further
         }
 
         GameManager.Instance.AdvanceTime();
         UpdateUI();
         UpdateEmailNotification();
-        ShowDebugMessage($"Week advanced to {GameManager.Instance.currentMonth}");
-
-        // Check if this was the last week
-        if (GameManager.Instance.currentMonth >= GameManager.Instance.maxMonths)
-        {
-            ShowDebugMessage("Final week! Better find a job soon...");
-        }
+        //ShowDebugMessage($"Week advanced to {GameManager.Instance.currentMonth}");
     }
 
-    // Can remove this when not needed
-    private void ShowDebugMessage(string message)
-    {
-        if (debugPanel != null && debugText != null)
-        {
-            debugPanel.SetActive(true);
-            debugText.text = message;
-
-            // Hide after 3 seconds
-            Invoke("HideDebugPanel", 3f);
-        }
-    }
-    // Can remove this when not needed
     private void HideDebugPanel()
     {
         if (debugPanel != null)
         {
             debugPanel.SetActive(false);
+        }
+    }
+
+    public void SpawnCvIcon()
+    {
+        Debug.Log($"[DESKTOP] SpawnCvIcon called on {name}");
+        if (cvIconPrefab == null || cvIconContainer == null)
+        {
+            Debug.LogWarning("[DESKTOP] Missing cvIconPrefab or cvIconContainer.");
+            return;
+        }
+
+        cvVersionCounter++;
+
+        GameObject icon = Instantiate(cvIconPrefab, cvIconContainer);
+
+        // Set label
+        TextMeshProUGUI label = icon.GetComponentInChildren<TextMeshProUGUI>();
+        if (label != null)
+        {
+            label.text = $"CV_versjon{cvVersionCounter}.docx";
+        }
+
+        RectTransform rt = icon.GetComponent<RectTransform>();
+        if (rt != null)
+        {
+            int index = cvVersionCounter - 1; // 0-based
+            int col = index % iconsPerRow;
+            int row = index / iconsPerRow;
+
+            // Base grid position
+            Vector2 pos = firstIconOffset + new Vector2(
+                col * iconSpacing.x,
+                row * iconSpacing.y
+            );
+
+            // Small random jitter around the grid slot
+            Vector2 jitter = new Vector2(
+                Random.Range(-jitterRange, jitterRange),
+                Random.Range(-jitterRange, jitterRange)
+            );
+
+            rt.anchoredPosition = pos + jitter;
         }
     }
 }
