@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="ParameterPreset" id="{e5fb731a-e64a-4fdd-b322-32be36d1390f}">
+		<property name="name">
+			<value>musikk PÅ</value>
+		</property>
+		<relationship name="folder">
+			<destination>{eb8fcf24-ad99-4307-896c-bccd95815591}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{c82b4085-609e-42a8-8da3-02f2ad2170b2}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{c82b4085-609e-42a8-8da3-02f2ad2170b2}">
+		<property name="isGlobal">
+			<value>true</value>
+		</property>
+		<property name="initialValue">
+			<value>1</value>
+		</property>
+		<property name="isExposedRecursively">
+			<value>false</value>
+		</property>
+	</object>
+</objects>

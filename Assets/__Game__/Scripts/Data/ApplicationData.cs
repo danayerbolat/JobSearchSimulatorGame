@@ -9,6 +9,7 @@ public class ApplicationData
     public bool responseReceived = false;  // Has response been generated
     public bool gotCallback = false;       // Did they get callback?
     public float successChance = 0f;       // Calculated success chance
+    public float authenticityCost = 0f;    // Logs authenticity cost of CV
 
     // Constructor for easy creation
     public ApplicationData(JobData jobData, CVChoices cv, int month)
@@ -19,6 +20,7 @@ public class ApplicationData
         responseReceived = false;
         gotCallback = false;
         successChance = 0f;
+        authenticityCost = 0f;
     }
 }
 
@@ -26,9 +28,9 @@ public class ApplicationData
 public class CVChoices
 {
     // Single choices
-    public string chosenName;           // "Zhanna Bolatkhan" or "Joanna Bolat"
-    public string chosenPhoto;          // "Casual" / "Professional" / "None"
-    public string chosenCoverLetter;    // "International" / "Neutral" / "Norwegian"
+    public string chosenName;           
+    public string chosenPhoto;          
+    public string chosenCoverLetter;    
 
     // Multiple choices (arrays)
     public string[] chosenLanguages;

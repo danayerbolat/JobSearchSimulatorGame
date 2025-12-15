@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.02.00">
+	<object class="AudioFile" id="{78399dc4-6554-4907-bc0d-b1a47dad81b0}">
+		<property name="assetPath">
+			<value>depression music 1.mp3</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>48</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>87.432000000000002</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{7221c989-1820-40a6-88a9-a20ac7f62bc6}</destination>
+		</relationship>
+	</object>
+</objects>
